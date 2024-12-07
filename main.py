@@ -1,4 +1,6 @@
 from collections import deque
+from joblib import Parallel, delayed
+import cProfile
 
 directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
@@ -14,14 +16,13 @@ def find_numbers(matrix):
     return numbers
 
 
-def bfs(matrix, start, end):
+def bfs_all_paths(matrix, start, end):
     rows, cols = len(matrix), len(matrix[0])
-    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
-    def is_valid(x, y):
-        return 0 <= x < rows and 0 <= y < cols and (matrix[x][y] == 0 or (x, y) == end)
+    def is_valid(x, y, visited):
+        return 0 <= x < rows and 0 <= y < cols and (matrix[x][y] == 0 or (x, y) == end) and (x, y) not in visited
 
-    queue = deque([([start], start)])
+    queue = deque([([start], start)])  # Хранит текущий путь и последнюю точку
     all_paths = []
 
     while queue:
@@ -33,43 +34,45 @@ def bfs(matrix, start, end):
 
         for dx, dy in directions:
             nx, ny = x + dx, y + dy
-            if is_valid(nx, ny) and (nx, ny) not in path:
+            if is_valid(nx, ny, set(path)):
                 queue.append((path + [(nx, ny)], (nx, ny)))
 
     return all_paths
 
 
+def process_number(matrix, positions):
+    start, end = positions
+    return bfs_all_paths(matrix, start, end)
+
+
 def find_all_paths(matrix, numbers):
     all_paths = {}
-    for num, positions in numbers.items():
-        if len(positions) == 2:
-            start, end = positions
-            paths = bfs(matrix, start, end)
-            if paths:
-                all_paths[num] = paths
-            else:
-                all_paths[num] = []
+    results = Parallel(n_jobs=-1)(delayed(process_number)(matrix, positions)
+                                  for num, positions in numbers.items() if len(positions) == 2)
+    for (num, positions), paths in zip(numbers.items(), results):
+        all_paths[num] = paths
     return all_paths
 
 
 def paths_intersect(path1, path2):
-    return bool(set(path1) & set(path2))
+    return not set(path1).isdisjoint(path2)
 
 
-def solve(matrix, numbers, all_paths, current_num, current_paths, used_paths):
+def solve(matrix, numbers, all_paths, current_num, current_paths, used_cells):
     if current_num > max(numbers.keys()):
         return current_paths
 
     if current_num not in all_paths or not all_paths[current_num]:
         return None
+
     for path in all_paths[current_num]:
-        if any(paths_intersect(path, used_path) for used_path in used_paths):
+        if any(cell in used_cells for cell in path):
             continue
 
-        new_used_paths = used_paths + [path]
+        new_used_cells = used_cells | set(path)
         new_current_paths = current_paths + [(current_num, path)]
 
-        result = solve(matrix, numbers, all_paths, current_num + 1, new_current_paths, new_used_paths)
+        result = solve(matrix, numbers, all_paths, current_num + 1, new_current_paths, new_used_cells)
         if result:
             return result
 
@@ -80,11 +83,11 @@ def solve_puzzle(matrix):
     numbers = find_numbers(matrix)
     all_paths = find_all_paths(matrix, numbers)
 
-    solution = solve(matrix, numbers, all_paths, 1, [], [])
+    solution = solve(matrix, numbers, all_paths, 1, [], set())
     return solution if solution else "Задача не имеет решения"
 
 
-if __name__ == '__main__':
+def main():
     matrix = [
         [0, 0, 0, 4, 0, 0, 0],
         [0, 3, 0, 0, 2, 5, 0],
@@ -97,3 +100,7 @@ if __name__ == '__main__':
 
     solution = solve_puzzle(matrix)
     print(solution)
+
+
+if __name__ == '__main__':
+    cProfile.run('main()')
