@@ -1,6 +1,6 @@
 from collections import deque
-from joblib import Parallel, delayed
-import cProfile
+from joblib import Parallel, delayed, cpu_count
+from functools import lru_cache
 
 directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
@@ -22,7 +22,7 @@ def bfs_all_paths(matrix, start, end):
     def is_valid(x, y, visited):
         return 0 <= x < rows and 0 <= y < cols and (matrix[x][y] == 0 or (x, y) == end) and (x, y) not in visited
 
-    queue = deque([([start], start)])  # Хранит текущий путь и последнюю точку
+    queue = deque([({start}, start)])
     all_paths = []
 
     while queue:
@@ -35,7 +35,7 @@ def bfs_all_paths(matrix, start, end):
         for dx, dy in directions:
             nx, ny = x + dx, y + dy
             if is_valid(nx, ny, set(path)):
-                queue.append((path + [(nx, ny)], (nx, ny)))
+                queue.append((path | {(nx, ny)}, (nx, ny)))
 
     return all_paths
 
@@ -47,15 +47,12 @@ def process_number(matrix, positions):
 
 def find_all_paths(matrix, numbers):
     all_paths = {}
-    results = Parallel(n_jobs=-1)(delayed(process_number)(matrix, positions)
-                                  for num, positions in numbers.items() if len(positions) == 2)
+    n_jobs = min(cpu_count(), len(numbers))
+    results = Parallel(n_jobs=n_jobs)(delayed(process_number)(matrix, positions)
+                                  for num, positions in numbers.items())
     for (num, positions), paths in zip(numbers.items(), results):
         all_paths[num] = paths
     return all_paths
-
-
-def paths_intersect(path1, path2):
-    return not set(path1).isdisjoint(path2)
 
 
 def solve(matrix, numbers, all_paths, current_num, current_paths, used_cells):
@@ -69,7 +66,7 @@ def solve(matrix, numbers, all_paths, current_num, current_paths, used_cells):
         if any(cell in used_cells for cell in path):
             continue
 
-        new_used_cells = used_cells | set(path)
+        new_used_cells = used_cells | path
         new_current_paths = current_paths + [(current_num, path)]
 
         result = solve(matrix, numbers, all_paths, current_num + 1, new_current_paths, new_used_cells)
@@ -81,6 +78,7 @@ def solve(matrix, numbers, all_paths, current_num, current_paths, used_cells):
 
 def solve_puzzle(matrix):
     numbers = find_numbers(matrix)
+
     all_paths = find_all_paths(matrix, numbers)
 
     solution = solve(matrix, numbers, all_paths, 1, [], set())
@@ -103,4 +101,8 @@ def main():
 
 
 if __name__ == '__main__':
-    cProfile.run('main()')
+    import datetime
+    start = datetime.datetime.now()
+    main()
+    finish = datetime.datetime.now()
+    print(finish - start)
