@@ -16,7 +16,7 @@ def find_numbers(matrix):
     return numbers
 
 
-def bfs_all_paths(matrix, start, end):
+def bfs_all_paths(matrix, start, end, max_paths=500):
     rows, cols = len(matrix), len(matrix[0])
 
     def is_valid(x, y, visited):
@@ -25,7 +25,7 @@ def bfs_all_paths(matrix, start, end):
     queue = deque([({start}, start)])
     all_paths = []
 
-    while queue:
+    while queue and len(all_paths) < max_paths:
         path, (x, y) = queue.popleft()
 
         if (x, y) == end:
