@@ -1,6 +1,5 @@
 from collections import deque
 from joblib import Parallel, delayed, cpu_count
-from functools import lru_cache
 
 directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
