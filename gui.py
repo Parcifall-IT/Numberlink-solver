@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
-from main import solve_puzzle
+from sat import solve_puzzle
 import random
 
 

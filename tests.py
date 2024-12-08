@@ -1,5 +1,5 @@
 import unittest
-from main import solve_puzzle
+from sat import solve_puzzle
 
 
 class TestPuzzleSolver(unittest.TestCase):
