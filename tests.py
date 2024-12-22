@@ -37,7 +37,7 @@ class TestPuzzleSolver(unittest.TestCase):
         solution = solve_puzzle(matrix)
         self.assertEqual(solution, expected)
 
-    def text_large_case(self):
+    def test_large_case(self):
         matrix = [
             [16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -91,6 +91,20 @@ class TestPuzzleSolver(unittest.TestCase):
             [2, 1]
         ]
         expected = "Задача не имеет решения"
+        solution = solve_puzzle(matrix)
+        self.assertEqual(solution, expected)
+
+    def test_borders(self):
+        matrix = [
+            [1, 0, -1, 1, 0],
+            [-1, 0, -1, -1, 0],
+            [0, 0, -1, -1, 0],
+            [0, -1, 0, 0, 0],
+            [0, 0, 0, -1, -1]
+        ]
+        expected = [
+            (1, {(0, 1), (2, 4), (4, 0), (0, 4), (2, 1), (3, 4), (0, 0), (1, 1), (0, 3), (2, 0), (4, 2), (3, 0), (1, 4), (3, 3), (3, 2), (4, 1)})
+        ]
         solution = solve_puzzle(matrix)
         self.assertEqual(solution, expected)
 
