@@ -20,6 +20,25 @@ class NumberlinkApp:
 
         self.start_screen()
 
+    def bind_enter_to_button(self, button):
+        """Привязывает нажатие Enter к переданной кнопке."""
+        self.root.bind("<Return>", lambda event: button.invoke())
+
+    def bind_arrows_to_entries(self):
+        """Привязывает переключение между полями ввода с помощью стрелок."""
+        for i, row in enumerate(self.entries):
+            for j, entry in enumerate(row):
+                entry.bind("<Up>", lambda event, x=i, y=j: self.focus_entry(x - 1, y))
+                entry.bind("<Down>", lambda event, x=i, y=j: self.focus_entry(x + 1, y))
+                entry.bind("<Left>", lambda event, x=i, y=j: self.focus_entry(x, y - 1))
+                entry.bind("<Right>", lambda event, x=i, y=j: self.focus_entry(x, y + 1))
+        self.focus_entry(0, 0)
+
+    def focus_entry(self, x, y):
+        """Устанавливает фокус на указанное поле ввода, если оно существует."""
+        if 0 <= x < self.rows and 0 <= y < self.cols:
+            self.entries[x][y].focus()
+
     @staticmethod
     def generate_random_colors(n):
         colors = set()
@@ -50,7 +69,7 @@ class NumberlinkApp:
         self.cols_entry = tk.Entry(input_frame, width=5, font=("Arial", 12))
         self.cols_entry.grid(row=1, column=1, padx=5)
 
-        tk.Button(
+        create_button = tk.Button(
             self.root,
             text="Создать поле",
             command=self.create_grid,
@@ -59,7 +78,13 @@ class NumberlinkApp:
             fg="white",
             activebackground="#45a049",
             relief="raised",
-        ).pack(pady=20)
+        )
+        create_button.pack(pady=20)
+
+        self.rows_entry.bind("<Down>", lambda event: self.cols_entry.focus())
+        self.cols_entry.bind("<Up>", lambda event: self.rows_entry.focus())
+        self.rows_entry.focus()
+        self.bind_enter_to_button(create_button)  # Привязать Enter к кнопке
 
     def create_grid(self):
         try:
@@ -88,7 +113,9 @@ class NumberlinkApp:
                 row.append(entry)
             self.entries.append(row)
 
-        tk.Button(
+        self.bind_arrows_to_entries()
+
+        solve_button = tk.Button(
             self.root,
             text="Решить",
             command=self.solve,
@@ -97,7 +124,10 @@ class NumberlinkApp:
             fg="white",
             activebackground="#1e88e5",
             relief="raised",
-        ).pack(pady=10)
+        )
+        solve_button.pack(pady=10)
+
+        self.bind_enter_to_button(solve_button)  # Привязать Enter к кнопке
 
     def solve(self):
         try:
@@ -127,7 +157,7 @@ class NumberlinkApp:
             bg="#f7f7f7",
         ).pack(pady=20)
 
-        tk.Button(
+        return_button = tk.Button(
             self.root,
             text="Вернуться к вводу",
             command=self.start_screen,
@@ -136,10 +166,12 @@ class NumberlinkApp:
             fg="white",
             activebackground="#1e88e5",
             relief="raised",
-        ).pack(pady=20)
+        )
+        return_button.pack(pady=20)
+
+        self.bind_enter_to_button(return_button)  # Привязать Enter к кнопке
 
     def show_solution(self, result):
-        print(result)
         self.colors = self.generate_random_colors(len(result))
 
         for widget in self.root.winfo_children():
@@ -158,8 +190,6 @@ class NumberlinkApp:
                     self.canvas.create_text(
                         x0 + 20, y0 + 20, text=str(self.grid[i][j]), font=("Arial", 14, "bold"), fill="#333333"
                     )
-                elif self.grid[i][j] == -1:  # Отображаем стенки
-                    self.canvas.create_rectangle(x0, y0, x1, y1, fill="black")
 
         color_map = {}
         for num, points in result:
@@ -173,6 +203,20 @@ class NumberlinkApp:
                 x0, y0 = ordered_points[i][1] * 40 + 20, ordered_points[i][0] * 40 + 20
                 x1, y1 = ordered_points[i + 1][1] * 40 + 20, ordered_points[i + 1][0] * 40 + 20
                 self.canvas.create_line(x0, y0, x1, y1, fill=color, width=3)
+
+        return_button = tk.Button(
+            self.root,
+            text="Вернуться к вводу",
+            command=self.start_screen,
+            font=("Arial", 12),
+            bg="#2196f3",
+            fg="white",
+            activebackground="#1e88e5",
+            relief="raised",
+        )
+        return_button.pack(pady=20)
+
+        self.bind_enter_to_button(return_button)  # Привязать Enter к кнопке
 
 
 def order_path(points):
