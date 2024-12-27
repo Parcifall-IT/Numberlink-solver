@@ -44,7 +44,7 @@ def findSrcandDest(matrix):
     for i in range(len(matrix)):
         for j in range(len(matrix[0])):
             color = matrix[i][j]
-            if color != 0:
+            if color > 0:
                 if color not in coordinates:
                     coordinates[color] = {'src': (i, j), 'dest': None}
                 else:

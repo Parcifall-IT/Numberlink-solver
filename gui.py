@@ -190,6 +190,8 @@ class NumberlinkApp:
                     self.canvas.create_text(
                         x0 + 20, y0 + 20, text=str(self.grid[i][j]), font=("Arial", 14, "bold"), fill="#333333"
                     )
+                elif self.grid[i][j] == -1:  # Отображаем стенки
+                    self.canvas.create_rectangle(x0, y0, x1, y1, fill="black")
 
         color_map = {}
         for num, points in result:
